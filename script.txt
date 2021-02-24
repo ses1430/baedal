@@ -1,0 +1,139 @@
+# 메뉴등록
+http http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/payments paymentNm=Juice
+http http://a8eb3f59b014b49ac994354edfbe68e6-1668101952.ap-northeast-2.elb.amazonaws.com:8080/payments paymentNm=Gimbab
+http http://a8eb3f59b014b49ac994354edfbe68e6-1668101952.ap-northeast-2.elb.amazonaws.com:8080/payments paymentNm=Egg
+
+# 주문등록
+http http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/orders paymentId=1 paymentNm=Juice qty=1
+http http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/orders paymentId=2 paymentNm=Gimbab qty=2
+http http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/orders paymentId=3 paymentNm=Egg qty=3
+
+# 배달완료 / 주문취소
+http PATCH http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/deliveries/1 status=complete
+http PATCH http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/orders/2 status=cancel
+
+# 조회
+http http://localhost:8088/orders
+http http://localhost:8088/deliveries
+http http://localhost:8088/payments
+http http://localhost:8088/mypages
+
+# kafka 실행
+zookeeper-server-start.bat ..\..\config\zookeeper.properties
+kafka-server-start.bat ..\..\config\server.properties
+kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic baedal
+
+# aws
+region : ap-northeast-2
+account id : 496278789073
+cluster name : skcc15-eks
+
+# AWS 클러스터 생성
+eksctl create cluster --name skcc15-eks --version 1.17 --nodegroup-name standard-workers --node-type t3.medium --nodes 2 --nodes-min 1 --nodes-max 4
+
+# AWS 클러스터 토큰 가져오기
+aws eks --region ap-northeast-2 update-kubeconfig --name skcc15-eks
+
+# AWS 컨테이너 레지스트리에 이미지 리파지토리 생성
+aws ecr create-repository --repository-name skcc15-order    --image-scanning-configuration scanOnPush=true --region ap-northeast-2
+aws ecr create-repository --repository-name skcc15-delivery --image-scanning-configuration scanOnPush=true --region ap-northeast-2
+aws ecr create-repository --repository-name skcc15-payment     --image-scanning-configuration scanOnPush=true --region ap-northeast-2
+aws ecr create-repository --repository-name skcc15-mypage   --image-scanning-configuration scanOnPush=true --region ap-northeast-2
+aws ecr create-repository --repository-name skcc15-gateway  --image-scanning-configuration scanOnPush=true --region ap-northeast-2
+
+# AWS 컨테이너 레지스트리 로그인
+aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com
+
+# 오류(unknown flag: --password-stdin) 발생 시,
+docker login --username AWS -p $(aws ecr get-login-password --region ap-northeast-2) 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/
+
+# maven 패키 생성 & docker 이미지 생성 & push
+cd /home/project
+git clone https://github.com/ses1430/baedal
+
+# docker image 생성
+cd /home/project/team/myeats/order
+mvn package
+docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-order:v1 .
+docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-order:v1
+
+cd /home/project/team/myeats/delivery
+mvn package
+docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-delivery:v1 .
+docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-delivery:v1
+
+cd /home/project/team/myeats/payment
+mvn package
+docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-payment:v1 .
+docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-payment:v1
+
+cd /home/project/team/myeats/mypage
+mvn package
+docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-mypage:v1 .
+docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-mypage:v1
+
+cd /home/project/team/myeats/gateway
+mvn package
+docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-gateway:v1 .
+docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-gateway:v1
+
+# docker 이미지로 deploy/service 생성
+kubectl create deploy order    --image=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-order:v1
+kubectl create deploy delivery --image=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-delivery:v1
+kubectl create deploy payment  --image=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-payment:v1
+kubectl create deploy mypage   --image=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-mypage:v1
+kubectl create deploy gateway  --image=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-gateway:v1
+
+kubectl expose deploy order    --type=ClusterIP --port=8080
+kubectl expose deploy delivery --type=ClusterIP --port=8080
+kubectl expose deploy payment     --type=ClusterIP --port=8080
+kubectl expose deploy mypage   --type=ClusterIP --port=8080
+kubectl expose deploy gateway  --type=LoadBalancer --port=8080
+
+# 무정지 배포 테스트
+siege -c100 -t120S -v --content-type "application/json" 'http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/payments POST {"paymentNm":"Coffee"}'
+kubectl set image deployment/payment t05-payment=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/t05-payment:v2
+kubectl create -f deployment.yml
+
+# 한번에 죽이기
+kubectl delete po,svc,deploy --all
+docker image rm $(docker images -q)
+
+# helm repo 변경
+helm repo add incubator https://charts.helm.sh/incubator
+
+# kafka msg listen
+kubectl -n kafka exec -ti my-kafka-0 -- kafka-console-consumer --bootstrap-server my-kafka:9092 --topic baedal --from-beginning
+
+---------------
+EFS
+---------------
+kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"
+aws eks describe-cluster --name SKTeam05-eks --query "cluster.resourcesVpcConfig.vpcId" --output text
+-- vpc-03be0ce2626a6f392
+aws ec2 describe-vpcs --vpc-ids vpc-03be0ce2626a6f392 --query "Vpcs[].CidrBlock" --output text
+-- 192.168.0.0/16
+
+aws ec2 create-security-group --description efs-test-sg --group-name efs-sg --vpc-id vpc-03be0ce2626a6f392
+-- sg-011b9d857ef4c394b
+
+aws ec2 authorize-security-group-ingress --group-id sg-011b9d857ef4c394b  --protocol tcp --port 2049 --cidr 192.168.0.0/16
+aws efs create-file-system --creation-token eks-efs
+
+---------------
+HELM & KAFKA
+---------------
+# helm install
+curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
+chmod 700 get_helm.sh
+./get_helm.sh
+
+# kafka install
+kubectl create sa tiller --namespace kube-system  # helm 의 설치관리자를 위한 시스템 사용자 생성
+kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+
+helm repo add incubator https://charts.helm.sh/incubator                                    
+helm repo list
+helm repo update
+kubectl create ns kafka
+helm install my-kafka --namespace kafka incubator/kafka
