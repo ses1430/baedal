@@ -22,7 +22,7 @@ public class Order {
 
     @PrePersist
     public void onPrePersist() {
-        this.setStatus("ordered");
+        this.setStatus("order");
     }
 
     @PostPersist
