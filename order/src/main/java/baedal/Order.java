@@ -13,7 +13,7 @@ public class Order {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
-    private Long menuNm;
+    private String menuNm;
     private String status;
     private String deliveryStatus;
     private Long deliveryId;
@@ -21,28 +21,34 @@ public class Order {
     private String paymentStatus;
 
     @PrePersist
-    public void onPrePersist(){
+    public void onPrePersist() {
+        this.setStatus("ordered");
+    }
+
+    @PostPersist
+    public void onPostPersist() {
         Ordered ordered = new Ordered();
         BeanUtils.copyProperties(this, ordered);
         ordered.publishAfterCommit();
-
-        //Following code causes dependency to external APIs
-        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
-        baedal.external.Payment payment = new baedal.external.Payment();
-        payment.setOrderId(this.getId());
-        payment.setStatus("paid");
-        // mappings goes here
-        OrderApplication.applicationContext.getBean(baedal.external.PaymentService.class).requestPay(payment);
     }
 
-    @PostUpdate
-    public void onPostUpdate(){
+    @PreUpdate
+    public void onPreUpdate(){
 
         // order cancel
         if ("cancel".equals(this.getStatus())) {
             OrderCancelled orderCancelled = new OrderCancelled();
             BeanUtils.copyProperties(this, orderCancelled);
             orderCancelled.publishAfterCommit();
+
+            //Following code causes dependency to external APIs
+            // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
+            baedal.external.Payment payment = new baedal.external.Payment();
+            payment.setOrderId(this.getId());
+            payment.setDeliveryId(this.getDeliveryId());
+            payment.setStatus(this.getStatus());
+            // mappings goes here
+            OrderApplication.applicationContext.getBean(baedal.external.PaymentService.class).cancel(this.getPaymentId(), payment);
         }
     }
 
@@ -53,11 +59,11 @@ public class Order {
     public void setId(Long id) {
         this.id = id;
     }
-    public Long getMenuNm() {
+    public String getMenuNm() {
         return menuNm;
     }
 
-    public void setMenuNm(Long menuNm) {
+    public void setMenuNm(String menuNm) {
         this.menuNm = menuNm;
     }
     public String getStatus() {

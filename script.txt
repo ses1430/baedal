@@ -1,3 +1,10 @@
+##########
+# 로컬용 #
+##########
+
+# 주문등록
+http http://localhost:8088/orders menuNm=Juice status="ordered"
+
 # 메뉴등록
 http http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/payments paymentNm=Juice
 http http://a8eb3f59b014b49ac994354edfbe68e6-1668101952.ap-northeast-2.elb.amazonaws.com:8080/payments paymentNm=Gimbab

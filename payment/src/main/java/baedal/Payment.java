@@ -3,6 +3,9 @@ package baedal;
 import javax.persistence.*;
 import org.springframework.beans.BeanUtils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Entity
 @Table(name="Payment_table")
 public class Payment {
@@ -25,27 +28,16 @@ public class Payment {
         }
     }
 
-    @PreUpdate
-    public void onPreUpdate(){
+    @PostUpdate
+    public void onPostUpdate(){
 
         // cancel pay <- order
         if ("cancel".equals(this.getStatus())) {
             PayCancelled payCancelled = new PayCancelled();
             BeanUtils.copyProperties(this, payCancelled);
             payCancelled.publishAfterCommit();
-
-            //Following code causes dependency to external APIs
-            // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
-
-            baedal.external.Delivery delivery = new baedal.external.Delivery();
-            delivery.setOrderId(this.getOrderId());
-            delivery.setPaymentId(this.getId());
-            delivery.setStatus(this.getStatus());
-            // mappings goes here
-            PaymentApplication.applicationContext.getBean(baedal.external.DeliveryService.class).cancel(this.getDeliveryId(), delivery);
         }
     }
-
 
     public Long getId() {
         return id;
@@ -76,7 +68,16 @@ public class Payment {
         this.deliveryId = deliveryId;
     }
 
+    public String toJson(){
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = null;
 
+        try {
+            json = objectMapper.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("JSON format exception", e);
+        }
 
-
+        return json;
+    }
 }

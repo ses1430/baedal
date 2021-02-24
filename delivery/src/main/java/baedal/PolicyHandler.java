@@ -29,4 +29,16 @@ public class PolicyHandler{
             deliveryRepository.save(delivery);
         }
     }
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverPayCancelled_cancelDelivery(@Payload PayCancelled payCancelled){
+
+        if(payCancelled.isMe()){
+            System.out.println("##### listener  : " + payCancelled.toJson());
+
+            Delivery delivery = deliveryRepository.findById(payCancelled.getOrderId()).get();
+            delivery.setStatus("cancel");
+            deliveryRepository.save(delivery);
+        }
+    }
 }

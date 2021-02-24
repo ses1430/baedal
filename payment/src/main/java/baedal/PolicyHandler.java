@@ -17,6 +17,19 @@ public class PolicyHandler{
     PaymentRepository paymentRepository;
 
     @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverOrdered_requestPay(@Payload Ordered ordered){
+
+        if(ordered.isMe()){
+            System.out.println("##### listener  : " + ordered.toJson());
+
+            Payment payment = new Payment();
+            payment.setOrderId(ordered.getId());
+            payment.setStatus("paid");
+            paymentRepository.save(payment);
+        }
+    }
+
+    @StreamListener(KafkaProcessor.INPUT)
     public void wheneverDeliveryStarted_updateDeliveryId(@Payload DeliveryStarted deliveryStarted){
 
         if(deliveryStarted.isMe()){

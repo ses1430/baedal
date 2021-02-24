@@ -1,5 +1,8 @@
 package baedal;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class Paid extends AbstractEvent {
 
     private Long id;
@@ -38,5 +41,18 @@ public class Paid extends AbstractEvent {
 
     public void setDeliveryId(Long deliveryId) {
         this.deliveryId = deliveryId;
+    }
+
+    public String toJson(){
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = null;
+
+        try {
+            json = objectMapper.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("JSON format exception", e);
+        }
+
+        return json;
     }
 }

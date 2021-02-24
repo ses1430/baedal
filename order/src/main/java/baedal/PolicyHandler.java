@@ -42,18 +42,6 @@ public class PolicyHandler{
     }
 
     @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverDeliveryCompleted_updateStatus(@Payload DeliveryCompleted deliveryCompleted){
-
-        if(deliveryCompleted.isMe()){
-            System.out.println("##### listener  : " + deliveryCompleted.toJson());
-
-            Order order = orderRepository.findById(deliveryCompleted.getOrderId()).get();
-            order.setStatus(deliveryCompleted.getStatus());
-            orderRepository.save(order);
-        }
-    }
-
-    @StreamListener(KafkaProcessor.INPUT)
     public void wheneverDeliveryStarted_updateStatus(@Payload DeliveryStarted deliveryStarted){
 
         if(deliveryStarted.isMe()){
@@ -61,10 +49,22 @@ public class PolicyHandler{
 
             Order order = orderRepository.findById(deliveryStarted.getOrderId()).get();
             order.setDeliveryId(deliveryStarted.getId());
-            order.setStatus(deliveryStarted.getStatus());
+            order.setDeliveryStatus(deliveryStarted.getStatus());
             orderRepository.save(order);
         }
     }
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverDeliveryCompleted_updateStatus(@Payload DeliveryCompleted deliveryCompleted){
+
+        if(deliveryCompleted.isMe()){
+            System.out.println("##### listener  : " + deliveryCompleted.toJson());
+
+            Order order = orderRepository.findById(deliveryCompleted.getOrderId()).get();
+            order.setDeliveryStatus(deliveryCompleted.getStatus());
+            orderRepository.save(order);
+        }
+    }    
 
     @StreamListener(KafkaProcessor.INPUT)
     public void wheneverDeliveryCancelled_updateStatus(@Payload DeliveryCancelled deliveryCancelled){
@@ -73,7 +73,7 @@ public class PolicyHandler{
             System.out.println("##### listener  : " + deliveryCancelled.toJson());
 
             Order order = orderRepository.findById(deliveryCancelled.getOrderId()).get();
-            order.setStatus(deliveryCancelled.getStatus());
+            order.setDeliveryStatus(deliveryCancelled.getStatus());
             orderRepository.save(order);
         }
     }
