@@ -36,6 +36,7 @@ public class PolicyHandler{
             System.out.println("##### listener  : " + payCancelled.toJson());
 
             Order order = orderRepository.findById(payCancelled.getOrderId()).get();
+            order.setStatus("cancel");
             order.setPaymentStatus(payCancelled.getStatus());
             orderRepository.save(order);
         }

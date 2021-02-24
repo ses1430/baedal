@@ -5,6 +5,8 @@
 # 테스트 
 http http://localhost:8088/orders menuNm=Juice
 http http://localhost:8088/orders menuNm=Coffee
+http http://localhost:8088/orders menuNm=Tea
+
 http PATCH http://localhost:8088/deliveries/1 status=complete
 http PATCH http://localhost:8088/orders/2 status=cancel
 
