@@ -14,6 +14,4 @@ public class PolicyHandler{
     public void onStringEventListener(@Payload String eventString){
 
     }
-
-
 }

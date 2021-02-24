@@ -1,8 +1,6 @@
 package baedal;
 
 import baedal.config.kafka.KafkaProcessor;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -15,12 +13,20 @@ public class PolicyHandler{
 
     }
 
+    @Autowired
+    DeliveryRepository deliveryRepository;
+
     @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverPaid_(@Payload Paid paid){
+    public void wheneverPaid_requestDelivery(@Payload Paid paid){
 
         if(paid.isMe()){
             System.out.println("##### listener  : " + paid.toJson());
+
+            Delivery delivery = new Delivery();
+            delivery.setOrderId(paid.getOrderId());
+            delivery.setPaymentId(paid.getId());
+            delivery.setStatus("started");
+            deliveryRepository.save(delivery);
         }
     }
-
 }

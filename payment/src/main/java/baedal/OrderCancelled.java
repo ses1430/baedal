@@ -1,4 +1,4 @@
-package BAEDAL;
+package baedal;
 
 public class OrderCancelled extends AbstractEvent {
 
@@ -7,7 +7,7 @@ public class OrderCancelled extends AbstractEvent {
     private String deliveryStatus;
     private Long deliveryId;
     private Long menuNm;
-    private Integer paymentId;
+    private Long paymentId;
     private String paymentStatus;
 
     public OrderCancelled(){
@@ -49,11 +49,11 @@ public class OrderCancelled extends AbstractEvent {
     public void setMenuNm(Long menuNm) {
         this.menuNm = menuNm;
     }
-    public Integer getPaymentId() {
+    public Long getPaymentId() {
         return paymentId;
     }
 
-    public void setPaymentId(Integer paymentId) {
+    public void setPaymentId(Long paymentId) {
         this.paymentId = paymentId;
     }
     public String getPaymentStatus() {

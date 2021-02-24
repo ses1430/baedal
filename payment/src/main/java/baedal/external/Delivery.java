@@ -4,6 +4,7 @@ public class Delivery {
 
     private Long id;
     private Long orderId;
+    private Long paymentId;
     private String status;
 
     public Long getId() {
@@ -23,6 +24,13 @@ public class Delivery {
     }
     public void setStatus(String status) {
         this.status = status;
+    }
+    public Long getPaymentId() {
+        return paymentId;
+    }
+
+    public void setPaymentId(Long paymentId) {
+        this.paymentId = paymentId;
     }
 
 }

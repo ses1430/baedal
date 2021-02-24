@@ -2,7 +2,9 @@ package baedal;
 
 import javax.persistence.*;
 import org.springframework.beans.BeanUtils;
-import java.util.List;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Entity
 @Table(name="Order_table")
@@ -18,15 +20,6 @@ public class Order {
     private Long paymentId;
     private String paymentStatus;
 
-    @PostUpdate
-    public void onPostUpdate(){
-        OrderCancelled orderCancelled = new OrderCancelled();
-        BeanUtils.copyProperties(this, orderCancelled);
-        orderCancelled.publishAfterCommit();
-
-
-    }
-
     @PrePersist
     public void onPrePersist(){
         Ordered ordered = new Ordered();
@@ -35,15 +28,23 @@ public class Order {
 
         //Following code causes dependency to external APIs
         // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
-
-        .external.Payment payment = new .external.Payment();
+        baedal.external.Payment payment = new baedal.external.Payment();
+        payment.setOrderId(this.getId());
+        payment.setStatus("paid");
         // mappings goes here
-        Application.applicationContext.getBean(.external.PaymentService.class)
-            .requestPay(payment);
-
-
+        OrderApplication.applicationContext.getBean(baedal.external.PaymentService.class).requestPay(payment);
     }
 
+    @PostUpdate
+    public void onPostUpdate(){
+
+        // order cancel
+        if ("cancel".equals(this.getStatus())) {
+            OrderCancelled orderCancelled = new OrderCancelled();
+            BeanUtils.copyProperties(this, orderCancelled);
+            orderCancelled.publishAfterCommit();
+        }
+    }
 
     public Long getId() {
         return id;
@@ -95,7 +96,16 @@ public class Order {
         this.paymentStatus = paymentStatus;
     }
 
+    public String toJson(){
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = null;
 
+        try {
+            json = objectMapper.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("JSON format exception", e);
+        }
 
-
+        return json;
+    }
 }

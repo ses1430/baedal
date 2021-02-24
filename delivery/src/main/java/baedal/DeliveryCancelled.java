@@ -1,10 +1,11 @@
-package BAEDAL;
+package baedal;
 
 public class DeliveryCancelled extends AbstractEvent {
 
     private Long id;
     private Long orderId;
     private String status;
+    private Long paymentId;
 
     public DeliveryCancelled(){
         super();
@@ -30,5 +31,13 @@ public class DeliveryCancelled extends AbstractEvent {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Long getPaymentId() {
+        return paymentId;
+    }
+
+    public void setPaymentId(Long paymentId) {
+        this.paymentId = paymentId;
     }
 }

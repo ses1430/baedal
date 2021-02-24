@@ -1,4 +1,4 @@
-package BAEDAL;
+package baedal;
 
 public class DeliveryCancelled extends AbstractEvent {
 

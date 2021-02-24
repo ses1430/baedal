@@ -2,7 +2,6 @@ package baedal;
 
 import javax.persistence.*;
 import org.springframework.beans.BeanUtils;
-import java.util.List;
 
 @Entity
 @Table(name="Payment_table")
@@ -17,28 +16,34 @@ public class Payment {
 
     @PostPersist
     public void onPostPersist(){
-        Paid paid = new Paid();
-        BeanUtils.copyProperties(this, paid);
-        paid.publishAfterCommit();
-
-
+        
+        // paid <- order
+        if ("paid".equals(this.getStatus())) {
+            Paid paid = new Paid();
+            BeanUtils.copyProperties(this, paid);
+            paid.publishAfterCommit();
+        }
     }
 
     @PreUpdate
     public void onPreUpdate(){
-        PayCancelled payCancelled = new PayCancelled();
-        BeanUtils.copyProperties(this, payCancelled);
-        payCancelled.publishAfterCommit();
 
-        //Following code causes dependency to external APIs
-        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
+        // cancel pay <- order
+        if ("cancel".equals(this.getStatus())) {
+            PayCancelled payCancelled = new PayCancelled();
+            BeanUtils.copyProperties(this, payCancelled);
+            payCancelled.publishAfterCommit();
 
-        .external.Delivery delivery = new .external.Delivery();
-        // mappings goes here
-        Application.applicationContext.getBean(.external.DeliveryService.class)
-            .cancel(delivery);
+            //Following code causes dependency to external APIs
+            // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
 
-
+            baedal.external.Delivery delivery = new baedal.external.Delivery();
+            delivery.setOrderId(this.getOrderId());
+            delivery.setPaymentId(this.getId());
+            delivery.setStatus(this.getStatus());
+            // mappings goes here
+            PaymentApplication.applicationContext.getBean(baedal.external.DeliveryService.class).cancel(this.getDeliveryId(), delivery);
+        }
     }
 
 
