@@ -49,7 +49,7 @@ aws eks --region ap-northeast-2 update-kubeconfig --name skcc15-eks
 # AWS 컨테이너 레지스트리에 이미지 리파지토리 생성
 aws ecr create-repository --repository-name skcc15-order    --image-scanning-configuration scanOnPush=true --region ap-northeast-2
 aws ecr create-repository --repository-name skcc15-delivery --image-scanning-configuration scanOnPush=true --region ap-northeast-2
-aws ecr create-repository --repository-name skcc15-payment     --image-scanning-configuration scanOnPush=true --region ap-northeast-2
+aws ecr create-repository --repository-name skcc15-payment  --image-scanning-configuration scanOnPush=true --region ap-northeast-2
 aws ecr create-repository --repository-name skcc15-mypage   --image-scanning-configuration scanOnPush=true --region ap-northeast-2
 aws ecr create-repository --repository-name skcc15-gateway  --image-scanning-configuration scanOnPush=true --region ap-northeast-2
 
@@ -64,27 +64,27 @@ cd /home/project
 git clone https://github.com/ses1430/baedal
 
 # docker image 생성
-cd /home/project/team/myeats/order
+cd /home/project/baedal/order
 mvn package
 docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-order:v1 .
 docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-order:v1
 
-cd /home/project/team/myeats/delivery
+cd /home/project/baedal/delivery
 mvn package
 docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-delivery:v1 .
 docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-delivery:v1
 
-cd /home/project/team/myeats/payment
+cd /home/project/baedal/payment
 mvn package
 docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-payment:v1 .
 docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-payment:v1
 
-cd /home/project/team/myeats/mypage
+cd /home/project/baedal/mypage
 mvn package
 docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-mypage:v1 .
 docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-mypage:v1
 
-cd /home/project/team/myeats/gateway
+cd /home/project/baedal/gateway
 mvn package
 docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-gateway:v1 .
 docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-gateway:v1
@@ -98,7 +98,7 @@ kubectl create deploy gateway  --image=496278789073.dkr.ecr.ap-northeast-2.amazo
 
 kubectl expose deploy order    --type=ClusterIP --port=8080
 kubectl expose deploy delivery --type=ClusterIP --port=8080
-kubectl expose deploy payment     --type=ClusterIP --port=8080
+kubectl expose deploy payment  --type=ClusterIP --port=8080
 kubectl expose deploy mypage   --type=ClusterIP --port=8080
 kubectl expose deploy gateway  --type=LoadBalancer --port=8080
 
@@ -115,7 +115,7 @@ docker image rm $(docker images -q)
 helm repo add incubator https://charts.helm.sh/incubator
 
 # kafka msg listen
-kubectl -n kafka exec -ti my-kafka-0 -- kafka-console-consumer --bootstrap-server my-kafka:9092 --topic baedal --from-beginning
+kubectl -n kafka exec -ti my-kafka-0 -- kafka-console-consumer --bootstrap-server my-kafka:9092 --topic baedal
 
 ---------------
 EFS
