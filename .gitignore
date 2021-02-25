@@ -1,2 +1,6 @@
 *.class
 credential.txt
+*.jar
+*.jar.original
+*.lst
+

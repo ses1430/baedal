@@ -19,6 +19,12 @@ spec:
           image: username/order:latest
           ports:
             - containerPort: 8080
+          env:
+            - name: TEXT
+              valueFrom:
+                configMapKeyRef:
+                  name: order-cm
+                  key: text
           readinessProbe:
             httpGet:
               path: '/actuator/health'
