@@ -14,11 +14,16 @@ public class Order {
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
     private String menuNm;
-    private String status = System.getenv("NAME");
+    private String status;
     private String deliveryStatus;
     private Long deliveryId;
     private Long paymentId;
     private String paymentStatus;
+
+    @PrePersist
+    public void onPrePersist() {
+        this.setStatus(System.getenv("TEXT"));
+    }
 
     @PostPersist
     public void onPostPersist() {
