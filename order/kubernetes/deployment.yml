@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: order
-          image: 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v2
+          image: 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v3
           ports:
             - containerPort: 8080
           env:

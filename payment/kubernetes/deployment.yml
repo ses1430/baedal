@@ -16,9 +16,14 @@ spec:
     spec:
       containers:
         - name: payment
-          image: username/payment:latest
+          image: 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-payment:v1
           ports:
             - containerPort: 8080
+          resources:
+            requests:
+              cpu: "300m"
+            limits:
+              cpu: "500m"
           readinessProbe:
             httpGet:
               path: '/actuator/health'
