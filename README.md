@@ -189,6 +189,25 @@ kubectl create deploy order --image=496278789073.dkr.ecr.ap-southeast-1.amazonaw
 kubectl expose deploy order --type=ClusterIP --port=8080
 ```
 
+## Autoscale
+
+결제요청이 일시적으로 급증하는 경우를 대비하여 autoscale(HPA)를 적용함.
+
+```
+# payment 서비스에 대해 cpu 부하가 15%를 넘으면 10개까지 scale out 설정
+kubectl autoscale deploy payment --min=1 --max=10 --cpu-percent=15
+
+# 부하를 주기 위해 siege
+siege -c20 -t30S -v --content-type "application/json" 'http://af9c68783609a42e0b7512ce75a0426f-1837115883.ap-southeast-1.elb.amazonaws.com:8080/payments POST {"orderId":"100", "status":"paid"}'
+```
+
+- metric server를 통해 수집된 부하가 threshold인 15% 넘어서 10개까지 auto scaleout 됨
+![hpa_scaleout](https://user-images.githubusercontent.com/452079/109101986-2a4fa200-776b-11eb-9011-224ca4f6fb04.png)
+
+- siege 결과도 100% 가용
+![hpa_scaleout_siege](https://user-images.githubusercontent.com/452079/109102052-5a974080-776b-11eb-87fe-3ce10b79ade1.png)
+
+
 ## CQRS
 
 mypage를 구현하여 order, menu, delivery 서비스의 데이터를 DB Join없이 조회할 수 있다.
