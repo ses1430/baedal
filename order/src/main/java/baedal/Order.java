@@ -22,7 +22,8 @@ public class Order {
 
     @PrePersist
     public void onPrePersist() {
-        this.setStatus("order");
+        System.out.println("########## Configmap TEXT => " + System.getenv("TEXT"));
+        this.setStatus(System.getenv("TEXT"));
     }
 
     @PostPersist
