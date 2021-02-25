@@ -19,7 +19,6 @@
     1. 배달 기능이 수행되지 않더라도 결제는 365일 24시간 받을 수 있어야 한다.
     2. 결제 기능이 수행되지 않더라도 주문은 365일 24시간 받을 수 있어야 한다.
 
-# 분석/설계
 
 ## Event Storming 결과
 ![캡처](https://user-images.githubusercontent.com/452079/109057315-efc31680-7724-11eb-85f7-78cedbf4dd10.PNG)
@@ -33,11 +32,6 @@
         - 주문취소시 배달취소에 대해서는 Request-Response 방식 처리
         - 주문시 결제요청, 결제완료시 배달요청 되는것에 있어서
           order/payment/delivery 서비스가 별도의 배포주기를 가지기 때문에 Eventual Consistency 방식으로 트랜잭션 처리함.
-
-# 구현:
-
-분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 BC별로 대변되는 마이크로 서비스들을 스프링부트로 구현하였다. 
-구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 808n 이다)
 
 
 ## DDD 의 적용
@@ -204,6 +198,31 @@ http://http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amaz
     }
 ]
 ```
+
+## Req / Resp
+
+주문취소를 위해서는 결제취소가 반드시 같이 이루어져야 한다.
+임의로 결제 서비스를 down 시킨 상태에서 주문취소가 안되는 것을 확인
+
+```
+root@labs-372165582:~# kubectl delete deploy payment
+deployment.apps "payment" deleted
+
+root@labs-372165582:~# http PATCH http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/orders/3 status=cancel
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json;charset=UTF-8
+Date: Thu, 25 Feb 2021 05:57:59 GMT
+transfer-encoding: chunked
+
+{
+    "error": "Internal Server Error", 
+    "message": "Could not commit JPA transaction; nested exception is javax.persistence.RollbackException: Error while committing the transaction", 
+    "path": "/orders/3", 
+    "status": 500, 
+    "timestamp": "2021-02-25T05:57:59.399+0000"
+}
+```
+
 
 ## Gateway
 
