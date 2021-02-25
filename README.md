@@ -51,118 +51,158 @@
 
 ```
 # order 서비스의 주문처리
-http http://a497f79f966814b10ac57259e6fce4ea-1896896990.ap-northeast-2.elb.amazonaws.com:8080/orders menuId=1 menuNm=Gimbab qty=1
-http http://a497f79f966814b10ac57259e6fce4ea-1896896990.ap-northeast-2.elb.amazonaws.com:8080/orders menuId=2 menuNm=Juice qty=1
+http http://af9c68783609a42e0b7512ce75a0426f-1837115883.ap-southeast-1.elb.amazonaws.com:8080/orders menuNm=Juice
+http http://af9c68783609a42e0b7512ce75a0426f-1837115883.ap-southeast-1.elb.amazonaws.com:8080/orders menuNm=Coffee
 
 # delivery 서비스의 배달처리
-http PATCH http://a497f79f966814b10ac57259e6fce4ea-1896896990.ap-northeast-2.elb.amazonaws.com:8080/deliveries/2 status=complete
+http PATCH http://a94dd0cfd7df544468bff0b8bd5e2141-1231054720.ap-southeast-1.elb.amazonaws.com:8080/deliveries/1 status=complete
 
 # order 서비스의 취소처리
-http PATCH http://a497f79f966814b10ac57259e6fce4ea-1896896990.ap-northeast-2.elb.amazonaws.com:8080/orders/1 status=cancel
+http PATCH http://a94dd0cfd7df544468bff0b8bd5e2141-1231054720.ap-southeast-1.elb.amazonaws.com:8080/orders/2 status=cancel
+```
 
-# 주문 및 배달상태 확인
-http://a497f79f966814b10ac57259e6fce4ea-1896896990.ap-northeast-2.elb.amazonaws.com:8080/orders
-http://a497f79f966814b10ac57259e6fce4ea-1896896990.ap-northeast-2.elb.amazonaws.com:8080/deliveries
+# 주문상태 확인
+http://adf958ba0d74944a7978448b830887f5-1320992449.ap-southeast-1.elb.amazonaws.com:8080/orders
 
-{
-  "_embedded" : {
-    "orders" : [ {
-      "menuId" : 1,
-      "menuNm" : "Juice",
-      "qty" : 1,
-      "status" : "cancel",
-      "deliveryStatus" : "cancelled",
-      "deliveryId" : 1,
-      "_links" : {
-        "self" : {
-          "href" : "http://order:8080/orders/1"
-        },
-        "order" : {
-          "href" : "http://order:8080/orders/1"
-        }
-      }
-    }, {
-      "menuId" : 2,
-      "menuNm" : "Gimbab",
-      "qty" : 2,
-      "status" : "ordered",
-      "deliveryStatus" : "complete",
-      "deliveryId" : 2,
-      "_links" : {
-        "self" : {
-          "href" : "http://order:8080/orders/2"
-        },
-        "order" : {
-          "href" : "http://order:8080/orders/2"
-        }
-      }
-    } ]
-  },
-  "_links" : {
-    "self" : {
-      "href" : "http://order:8080/orders{?page,size,sort}",
-      "templated" : true
-    },
-    "profile" : {
-      "href" : "http://order:8080/profile/orders"
+```
+"orders": [
+    {
+        "_links": {
+            "order": {
+                "href": "http://order:8080/orders/1"
+            }, 
+            "self": {
+                "href": "http://order:8080/orders/1"
+            }
+        }, 
+        "deliveryId": 1, 
+        "deliveryStatus": "complete", 
+        "menuNm": "Juice", 
+        "paymentId": 1, 
+        "paymentStatus": "paid", 
+        "status": "ordered"
+    }, 
+    {
+        "_links": {
+            "order": {
+                "href": "http://order:8080/orders/2"
+            }, 
+            "self": {
+                "href": "http://order:8080/orders/2"
+            }
+        }, 
+        "deliveryId": 2, 
+        "deliveryStatus": "cancel", 
+        "menuNm": "Coffee", 
+        "paymentId": 2, 
+        "paymentStatus": "cancel", 
+        "status": "cancel"
     }
-  },
-  "page" : {
-    "size" : 20,
-    "totalElements" : 2,
-    "totalPages" : 1,
-    "number" : 0
-  }
-}
+```
 
-{
-  "_embedded" : {
-    "deliveries" : [ {
-      "orderId" : 1,
-      "status" : "cancelled",
-      "_links" : {
-        "self" : {
-          "href" : "http://delivery:8080/deliveries/1"
-        },
-        "delivery" : {
-          "href" : "http://delivery:8080/deliveries/1"
-        }
-      }
-    }, {
-      "orderId" : 2,
-      "status" : "complete",
-      "_links" : {
-        "self" : {
-          "href" : "http://delivery:8080/deliveries/2"
-        },
-        "delivery" : {
-          "href" : "http://delivery:8080/deliveries/2"
-        }
-      }
-    } ]
-  },
-  "_links" : {
-    "self" : {
-      "href" : "http://delivery:8080/deliveries{?page,size,sort}",
-      "templated" : true
-    },
-    "profile" : {
-      "href" : "http://delivery:8080/profile/deliveries"
+# 결제상태 확인
+http://adf958ba0d74944a7978448b830887f5-1320992449.ap-southeast-1.elb.amazonaws.com:8080/orders
+
+```
+"payments": [
+    {
+        "_links": {
+            "payment": {
+                "href": "http://payment:8080/payments/1"
+            }, 
+            "self": {
+                "href": "http://payment:8080/payments/1"
+            }
+        }, 
+        "deliveryId": 1, 
+        "orderId": 1, 
+        "status": "paid"
+    }, 
+    {
+        "_links": {
+            "payment": {
+                "href": "http://payment:8080/payments/2"
+            }, 
+            "self": {
+                "href": "http://payment:8080/payments/2"
+            }
+        }, 
+        "deliveryId": 2, 
+        "orderId": 2, 
+        "status": "cancel"
     }
-  },
-  "page" : {
-    "size" : 20,
-    "totalElements" : 2,
-    "totalPages" : 1,
-    "number" : 0
-  }
-}
+]
+```
+
+# 배달상태 확인
+http://http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/deliveries
+
+```
+"deliveries": [
+    {
+        "_links": {
+            "delivery": {
+                "href": "http://delivery:8080/deliveries/1"
+            }, 
+            "self": {
+                "href": "http://delivery:8080/deliveries/1"
+            }
+        }, 
+        "orderId": 1, 
+        "paymentId": 1, 
+        "status": "complete"
+    }, 
+    {
+        "_links": {
+            "delivery": {
+                "href": "http://delivery:8080/deliveries/2"
+            }, 
+            "self": {
+                "href": "http://delivery:8080/deliveries/2"
+            }
+        }, 
+        "orderId": 2, 
+        "paymentId": 2, 
+        "status": "cancel"
+    }
+]
 ```
 
 ## CQRS
 
-mypage를 구현하여 order, menu, delivery 서비스의 데이터를 DB Join없이 조회할 수 있다.
+데이터 생성/삭제/변경과 조회를 분리하여 mypage를 구현함으로써 order, menu, delivery 서비스의 데이터를 DB Join없이 조회할 수 있다.
+
+http://http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/mypages
+
 ```
+"mypages": [
+    {
+        "_links": {
+            "mypage": {
+                "href": "http://mypage:8080/mypages/1"
+            }, 
+            "self": {
+                "href": "http://mypage:8080/mypages/1"
+            }
+        }, 
+        "menuNm": "Juice", 
+        "orderId": 1, 
+        "status": "Delivered"
+    }, 
+    {
+        "_links": {
+            "mypage": {
+                "href": "http://mypage:8080/mypages/2"
+            }, 
+            "self": {
+                "href": "http://mypage:8080/mypages/2"
+            }
+        }, 
+        "menuNm": "Coffee", 
+        "orderId": 2, 
+        "status": "Cancelled"
+    }
+]
 ```
 
 ## Gateway
