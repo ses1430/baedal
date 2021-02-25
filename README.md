@@ -159,44 +159,38 @@ http://a497f79f966814b10ac57259e6fce4ea-1896896990.ap-northeast-2.elb.amazonaws.
 }
 ```
 
-## API-Gateway
+## Gateway
 
-API Gateway를 통하여 동일 진입점으로 진입하여 각 마이크로 서비스를 접근할 수 있다.
-```
-spring:
-  profiles: default
-  cloud:
-    gateway:
-      routes:
-        - id: order
-          uri: http://localhost:8081
-          predicates:
-            - Path=/orders/**
-        - id: delivery
-          uri: http://localhost:8082
-          predicates:
-            - Path=/deliveries/** 
-        - id: mypage
-          uri: http://localhost:8083
-          predicates:
-            - Path= /mypages/**
-        - id: menu
-          uri: http://localhost:8084
-          predicates:
-            - Path=/menus/** 
-```
+gateway 서비스를 통하여 동일 진입점으로 진입하여 각 마이크로 서비스를 접근할 수 있다.
+
+![gateway](https://user-images.githubusercontent.com/452079/109101422-ffb11980-7769-11eb-9e01-a47063e86d67.PNG)
 
 외부에서 접근을 위하여 Gateway의 Service는 LoadBalancer Type으로 생성했다.
+
+![gateway_svc](https://user-images.githubusercontent.com/452079/109101517-30914e80-776a-11eb-81fb-7e5258ac49e6.PNG)
+
+## Deploy
+
+CodeBuild를 사용하지 않고 docker images를 AWS를 통해 수작업으로 배포/기동하였음.
+
 ```
-kubectl expose deploy gateway  --type=LoadBalancer --port=8080
-```
-```
-NAME                 TYPE           CLUSTER-IP      EXTERNAL-IP                                 PORT(S)          AGE
-service/gateway      LoadBalancer   10.100.208.95   censored.ap-northeast-2.elb.amazonaws.com   8080:30302/TCP   2s
-service/kubernetes   ClusterIP      10.100.0.1      <none>                                      443/TCP          108m
+# AWS 컨테이너 레지스트리에 이미지 리파지토리 생성
+aws ecr create-repository --repository-name skcc15-order    --image-scanning-configuration scanOnPush=true --region ap-southeast-1
+
+# package & docker image build/push
+mvn package
+docker build -t 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v3 .
+docker push 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v3
+
+# docker 이미지로 Deployment 생성
+kubectl create deploy order --image=496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v3
+
+# expose
+kubectl expose deploy order --type=ClusterIP --port=8080
 ```
 
-## CQRS / Meterialized Vie
+## CQRS
+
 mypage를 구현하여 order, menu, delivery 서비스의 데이터를 DB Join없이 조회할 수 있다.
 ```
 # mypage 확인
