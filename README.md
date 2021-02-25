@@ -159,55 +159,6 @@ http://a497f79f966814b10ac57259e6fce4ea-1896896990.ap-northeast-2.elb.amazonaws.
 }
 ```
 
-## Gateway
-
-gateway 서비스를 통하여 동일 진입점으로 진입하여 각 마이크로 서비스를 접근할 수 있다.
-
-![gateway](https://user-images.githubusercontent.com/452079/109101422-ffb11980-7769-11eb-9e01-a47063e86d67.PNG)
-
-외부에서 접근을 위하여 Gateway의 Service는 LoadBalancer Type으로 생성했다.
-
-![gateway_svc](https://user-images.githubusercontent.com/452079/109101517-30914e80-776a-11eb-81fb-7e5258ac49e6.PNG)
-
-## Deploy
-
-CodeBuild를 사용하지 않고 docker images를 AWS를 통해 수작업으로 배포/기동하였음.
-
-```
-# AWS 컨테이너 레지스트리에 이미지 리파지토리 생성
-aws ecr create-repository --repository-name skcc15-order    --image-scanning-configuration scanOnPush=true --region ap-southeast-1
-
-# package & docker image build/push
-mvn package
-docker build -t 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v3 .
-docker push 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v3
-
-# docker 이미지로 Deployment 생성
-kubectl create deploy order --image=496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v3
-
-# expose
-kubectl expose deploy order --type=ClusterIP --port=8080
-```
-
-## Autoscale
-
-결제요청이 일시적으로 급증하는 경우를 대비하여 autoscale(HPA)를 적용함.
-
-```
-# payment 서비스에 대해 cpu 부하가 15%를 넘으면 10개까지 scale out 설정
-kubectl autoscale deploy payment --min=1 --max=10 --cpu-percent=15
-
-# 부하를 주기 위해 siege
-siege -c20 -t30S -v --content-type "application/json" 'http://af9c68783609a42e0b7512ce75a0426f-1837115883.ap-southeast-1.elb.amazonaws.com:8080/payments POST {"orderId":"100", "status":"paid"}'
-```
-
-- metric server를 통해 수집된 부하가 threshold인 15% 넘어서 10개까지 auto scaleout 됨
-![hpa_scaleout](https://user-images.githubusercontent.com/452079/109101986-2a4fa200-776b-11eb-9011-224ca4f6fb04.png)
-
-- siege 결과도 100% 가용
-![hpa_scaleout_siege](https://user-images.githubusercontent.com/452079/109102052-5a974080-776b-11eb-87fe-3ce10b79ade1.png)
-
-
 ## CQRS
 
 mypage를 구현하여 order, menu, delivery 서비스의 데이터를 DB Join없이 조회할 수 있다.
@@ -264,6 +215,57 @@ http://a497f79f966814b10ac57259e6fce4ea-1896896990.ap-northeast-2.elb.amazonaws.
   }
 }
 ```
+
+## Gateway
+
+gateway 서비스를 통하여 동일 진입점으로 진입하여 각 마이크로 서비스를 접근할 수 있다.
+
+![gateway](https://user-images.githubusercontent.com/452079/109101422-ffb11980-7769-11eb-9e01-a47063e86d67.PNG)
+
+외부에서 접근을 위하여 Gateway의 Service는 LoadBalancer Type으로 생성했다.
+
+![gateway_svc](https://user-images.githubusercontent.com/452079/109101517-30914e80-776a-11eb-81fb-7e5258ac49e6.PNG)
+
+## Deploy
+
+CodeBuild를 사용하지 않고 docker images를 AWS를 통해 수작업으로 배포/기동하였음.
+
+```
+# AWS 컨테이너 레지스트리에 이미지 리파지토리 생성
+aws ecr create-repository --repository-name skcc15-order    --image-scanning-configuration scanOnPush=true --region ap-southeast-1
+
+# package & docker image build/push
+mvn package
+docker build -t 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v3 .
+docker push 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v3
+
+# docker 이미지로 Deployment 생성
+kubectl create deploy order --image=496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v3
+
+# expose
+kubectl expose deploy order --type=ClusterIP --port=8080
+```
+
+## Autoscale
+
+결제요청이 일시적으로 급증하는 경우를 대비하여 autoscale(HPA)를 적용함.
+
+```
+# payment 서비스에 대해 cpu 부하가 15%를 넘으면 10개까지 scale out 설정
+kubectl autoscale deploy payment --min=1 --max=10 --cpu-percent=15
+
+# 부하를 주기 위해 siege
+siege -c20 -t30S -v --content-type "application/json" 'http://af9c68783609a42e0b7512ce75a0426f-1837115883.ap-southeast-1.elb.amazonaws.com:8080/payments POST {"orderId":"100", "status":"paid"}'
+```
+
+- metric server를 통해 수집된 부하가 threshold인 15% 넘어서 10개까지 auto scaleout 됨
+
+![hpa_scaleout](https://user-images.githubusercontent.com/452079/109101986-2a4fa200-776b-11eb-9011-224ca4f6fb04.png)
+
+- siege 결과도 100% 가용
+
+![hpa_scaleout_siege](https://user-images.githubusercontent.com/452079/109102052-5a974080-776b-11eb-87fe-3ce10b79ade1.png)
+
 
 ## Liveness / Readiness 설정
 order 서비스 deployment.xml 에 Liveness, Readiness를 httpGet 방식으로 설정함
