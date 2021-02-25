@@ -10,54 +10,49 @@ http http://localhost:8088/orders menuNm=Tea
 http PATCH http://localhost:8088/deliveries/1 status=complete
 http PATCH http://localhost:8088/orders/2 status=cancel
 
-# 메뉴등록
-http http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/payments paymentNm=Juice
-http http://a8eb3f59b014b49ac994354edfbe68e6-1668101952.ap-northeast-2.elb.amazonaws.com:8080/payments paymentNm=Gimbab
-http http://a8eb3f59b014b49ac994354edfbe68e6-1668101952.ap-northeast-2.elb.amazonaws.com:8080/payments paymentNm=Egg
-
 # 주문등록
-http http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/orders paymentId=1 paymentNm=Juice qty=1
-http http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/orders paymentId=2 paymentNm=Gimbab qty=2
-http http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/orders paymentId=3 paymentNm=Egg qty=3
+http http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/orders menuNm=Juice
+http http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/orders menuNm=Coffee
+http http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/orders menuNm=Latte
+
+http http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/payments orderId=100 status=paid
 
 # 배달완료 / 주문취소
-http PATCH http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/deliveries/1 status=complete
-http PATCH http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/orders/2 status=cancel
+http PATCH http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/deliveries/1 status=complete
+http PATCH http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/orders/3 status=cancel
 
 # 조회
-http http://localhost:8088/orders
-http http://localhost:8088/deliveries
-http http://localhost:8088/payments
-http http://localhost:8088/mypages
+http http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/orders
+http http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/payments
+http http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/deliveries
+http http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/mypages
 
 # kafka 실행
 zookeeper-server-start.bat ..\..\config\zookeeper.properties
 kafka-server-start.bat ..\..\config\server.properties
 kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic baedal
 
-# aws
-region : ap-northeast-2
+# aws configure
+region : ap-southeast-1
 account id : 496278789073
 cluster name : skcc15-eks
 
-# AWS 클러스터 생성
+# AWS 클러스터 생성 / 토큰 가져오기
 eksctl create cluster --name skcc15-eks --version 1.17 --nodegroup-name standard-workers --node-type t3.medium --nodes 2 --nodes-min 1 --nodes-max 4
-
-# AWS 클러스터 토큰 가져오기
-aws eks --region ap-northeast-2 update-kubeconfig --name skcc15-eks
+aws eks --region ap-southeast-1 update-kubeconfig --name skcc15-eks
 
 # AWS 컨테이너 레지스트리에 이미지 리파지토리 생성
-aws ecr create-repository --repository-name skcc15-order    --image-scanning-configuration scanOnPush=true --region ap-northeast-2
-aws ecr create-repository --repository-name skcc15-delivery --image-scanning-configuration scanOnPush=true --region ap-northeast-2
-aws ecr create-repository --repository-name skcc15-payment  --image-scanning-configuration scanOnPush=true --region ap-northeast-2
-aws ecr create-repository --repository-name skcc15-mypage   --image-scanning-configuration scanOnPush=true --region ap-northeast-2
-aws ecr create-repository --repository-name skcc15-gateway  --image-scanning-configuration scanOnPush=true --region ap-northeast-2
+aws ecr create-repository --repository-name skcc15-order    --image-scanning-configuration scanOnPush=true --region ap-southeast-1
+aws ecr create-repository --repository-name skcc15-delivery --image-scanning-configuration scanOnPush=true --region ap-southeast-1
+aws ecr create-repository --repository-name skcc15-payment  --image-scanning-configuration scanOnPush=true --region ap-southeast-1
+aws ecr create-repository --repository-name skcc15-mypage   --image-scanning-configuration scanOnPush=true --region ap-southeast-1
+aws ecr create-repository --repository-name skcc15-gateway  --image-scanning-configuration scanOnPush=true --region ap-southeast-1
 
 # AWS 컨테이너 레지스트리 로그인
-aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com
+aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com
 
 # 오류(unknown flag: --password-stdin) 발생 시,
-docker login --username AWS -p $(aws ecr get-login-password --region ap-northeast-2) 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/
+docker login --username AWS -p $(aws ecr get-login-password --region ap-southeast-1) 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/
 
 # maven 패키 생성 & docker 이미지 생성 & push
 cd /home/project
@@ -66,35 +61,35 @@ git clone https://github.com/ses1430/baedal
 # docker image 생성
 cd /home/project/baedal/order
 mvn package
-docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-order:v1 .
-docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-order:v1
+docker build -t 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v4 .
+docker push 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v4
 
 cd /home/project/baedal/delivery
 mvn package
-docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-delivery:v1 .
-docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-delivery:v1
+docker build -t 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-delivery:v1 .
+docker push 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-delivery:v1
 
 cd /home/project/baedal/payment
 mvn package
-docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-payment:v1 .
-docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-payment:v1
+docker build -t 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-payment:v1 .
+docker push 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-payment:v1
 
 cd /home/project/baedal/mypage
 mvn package
-docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-mypage:v1 .
-docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-mypage:v1
+docker build -t 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-mypage:v1 .
+docker push 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-mypage:v1
 
 cd /home/project/baedal/gateway
 mvn package
-docker build -t 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-gateway:v1 .
-docker push 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-gateway:v1
+docker build -t 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-gateway:v1 .
+docker push 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-gateway:v1
 
 # docker 이미지로 deploy/service 생성
-kubectl create deploy order    --image=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-order:v1
-kubectl create deploy delivery --image=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-delivery:v1
-kubectl create deploy payment  --image=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-payment:v1
-kubectl create deploy mypage   --image=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-mypage:v1
-kubectl create deploy gateway  --image=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skcc15-gateway:v1
+kubectl create deploy order    --image=496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v4
+kubectl create deploy delivery --image=496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-delivery:v1
+kubectl create deploy payment  --image=496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-payment:v1
+kubectl create deploy mypage   --image=496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-mypage:v1
+kubectl create deploy gateway  --image=496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-gateway:v1
 
 kubectl expose deploy order    --type=ClusterIP --port=8080
 kubectl expose deploy delivery --type=ClusterIP --port=8080
@@ -102,9 +97,17 @@ kubectl expose deploy payment  --type=ClusterIP --port=8080
 kubectl expose deploy mypage   --type=ClusterIP --port=8080
 kubectl expose deploy gateway  --type=LoadBalancer --port=8080
 
+# deploy 삭제
+kubectl delete deploy order
+kubectl delete deploy delivery
+kubectl delete deploy payment
+kubectl delete deploy mypage
+
+kubectl delete deploy gateway
+
 # 무정지 배포 테스트
-siege -c100 -t120S -v --content-type "application/json" 'http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-northeast-2.elb.amazonaws.com:8080/payments POST {"paymentNm":"Coffee"}'
-kubectl set image deployment/payment t05-payment=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/t05-payment:v2
+siege -c100 -t120S -v --content-type "application/json" 'http://a2aaaa88c46c04cb2b53ae76248d9d4a-1050609880.ap-southeast-1.elb.amazonaws.com:8080/payments POST {"paymentNm":"Coffee"}'
+kubectl set image deployment/payment t05-payment=496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/t05-payment:v2
 kubectl create -f deployment.yml
 
 # 한번에 죽이기
@@ -116,6 +119,17 @@ helm repo add incubator https://charts.helm.sh/incubator
 
 # kafka msg listen
 kubectl -n kafka exec -ti my-kafka-0 -- kafka-console-consumer --bootstrap-server my-kafka:9092 --topic baedal
+
+# kafka 메시지 삭제
+kubectl -n kafka exec -ti my-kafka-0 -- kafka-topics --zookeeper my-kafka-zookeeper:2181 --alter --topic baedal --config retention.ms=1000
+kubectl -n kafka exec -ti my-kafka-1 -- kafka-topics --zookeeper my-kafka-zookeeper:2181 --alter --topic baedal --config retention.ms=1000
+kubectl -n kafka exec -ti my-kafka-2 -- kafka-topics --zookeeper my-kafka-zookeeper:2181 --alter --topic baedal --config retention.ms=1000
+
+###### HPA ######
+kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15
+kubectl get deploy payment -w
+siege -c20 -t30S -v --content-type "application/json" 'http://af8e5894b9dad4ce7a85b2554d1cbea9-206690749.ap-southeast-1.elb.amazonaws.com:8080/payments POST {"orderId":"100", "status":"paid"}'
+kubectl delete hpa order
 
 ---------------
 EFS
@@ -149,3 +163,45 @@ helm repo list
 helm repo update
 kubectl create ns kafka
 helm install my-kafka --namespace kafka incubator/kafka
+
+
+#### kafka 명렁어 #####
+
+## 키기 zookeeper -> server
+/usr/local/kafka/bin/zookeeper-server-start.sh /usr/local/kafka/config/zookeeper.properties
+/usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/server.properties
+
+## show topic list
+/usr/local/kafka/bin/kafka-topics.sh --list --zookeeper localhost:2181
+
+## create the topic
+/usr/local/kafka/bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic test
+/usr/local/kafka/bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic numtest
+
+## show the topic
+/usr/local/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --from-beginning --topic numtest
+
+## show the topic partiton 1
+/usr/local/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --from-beginning --partition 1 --topic numtest
+
+## delete the topic
+/usr/local/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic my_topic
+
+## 끄기 server -> zookeeper
+bin/kafka-server-stop.sh config/server.properties
+bin/zookeeper-server-stop.sh config/zookeeper.properties
+
+## consumer groups check!
+/usr/local/kafka/bin/kafka-consumer-groups.sh  --bootstrap-server localhost:9092 --list
+
+## consumer status and offset check!
+/usr/local/kafka/bin/kafka-consumer-groups.sh  --bootstrap-server localhost:9092 --group sr --describe
+
+## consumer group delete
+/usr/local/kafka/bin/kafka-consumer-groups.sh --zookeeper localhost:2181 --delete --group <group_name>
+
+## topic leader follower check 
+/usr/local/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --topic my_topic --describe
+
+## server log check
+cat /usr/local/bin/kafka/logs/server.log 
