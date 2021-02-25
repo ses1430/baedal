@@ -246,7 +246,7 @@ kubectl create deploy order --image=496278789073.dkr.ecr.ap-southeast-1.amazonaw
 kubectl expose deploy order --type=ClusterIP --port=8080
 ```
 
-## Autoscale
+## Autoscale (HPA)
 
 결제요청이 일시적으로 급증하는 경우를 대비하여 autoscale(HPA)를 적용함.
 
@@ -265,6 +265,57 @@ siege -c20 -t30S -v --content-type "application/json" 'http://af9c68783609a42e0b
 - siege 결과도 100% 가용
 
 ![hpa_scaleout_siege](https://user-images.githubusercontent.com/452079/109102052-5a974080-776b-11eb-87fe-3ce10b79ade1.png)
+
+
+## ConfigMap
+
+초기 주문시 상태값에 해당하는 텍스트를 ConfigMap으로 처리함.
+
+- configmap.yml 파일 내용 : key "text"에 해당하는 값을 "ordered"로 설정
+
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-cm
+data:
+  text: ordered
+```
+
+- deployment.yaml 파일에 env 설정
+
+```
+      containers:
+        - name: order
+          image: 496278789073.dkr.ecr.ap-southeast-1.amazonaws.com/skcc15-order:v3
+          ports:
+            - containerPort: 8080
+          env:
+            - name: TEXT
+              valueFrom:
+                configMapKeyRef:
+                  name: order-cm
+                  key: text
+```
+
+- 설정한 order pod 내에서 환경변수로 설정된 것을 확인
+
+```
+root@labs-372165582:/home/project/personal/baedal/payment/kubernetes# kubectl exec -it order-f6cc85dd8-vhdmx -- /bin/sh
+/ # env | grep TEXT
+TEXT=ordered
+/ #
+```
+
+- java코드내에서 환경변수 획득하여 order status 초기값으로 세팅
+
+```
+    @PrePersist
+    public void onPrePersist() {
+        System.out.println("########## Configmap TEXT => " + System.getenv("TEXT"));
+        this.setStatus(System.getenv("TEXT"));
+    }
+```
 
 
 ## Liveness / Readiness 설정
